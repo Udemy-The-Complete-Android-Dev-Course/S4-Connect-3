@@ -3,25 +3,65 @@ package ldansorean.s4connect3;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
+import android.widget.TableLayout;
+import android.widget.TableRow;
+import android.widget.Toast;
 
 public class MainActivity extends AppCompatActivity {
 
     private static int ROTATION = 360 * 3;
     private static int ANIMATION_DURATION = 500;
 
-    private int activePlayer = 0;
+    private Player player1, player2, activePlayer;
+    private Board board;
+    private boolean gameEnded = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        //setup game
+        this.player1 = new Player(1, "player 1");
+        this.player2 = new Player(2, "player 2");
+        this.activePlayer = player1;
+        this.board = new Board();
     }
 
     public void cellClicked(View view) {
-        displayPlayerToken((ImageView) view);
-        changeActivePlayer();
+        //get row and column clicked
+        TableRow.LayoutParams params = (TableRow.LayoutParams) view.getLayoutParams();
+        int column = params.column;
+        TableLayout tableLayout = findViewById(R.id.table);
+        int row = tableLayout.indexOfChild((TableRow) view.getParent());
+        Log.i("click", String.format("row=%d, column = %d", row, column));
+
+        markMove(row, column, (ImageView) view);
+    }
+
+    private void markMove(int row, int column, ImageView imageView) {
+        if (gameEnded) {
+            Toast.makeText(getApplicationContext(), "Game finished.", Toast.LENGTH_SHORT).show();
+        } else if (!board.isMoveValid(row, column)) {
+            Toast.makeText(getApplicationContext(), "That position is already marked.", Toast.LENGTH_SHORT).show();
+        } else {
+            board.markMove(row, column, activePlayer);
+            displayPlayerToken(imageView);
+            changeActivePlayer();
+
+            //check for winner
+            Player winner = board.getWinner();
+            if (winner != null) {
+                gameEnded = true;
+                Toast.makeText(getApplicationContext(), winner.getName() + " has won!", Toast.LENGTH_SHORT).show();
+            } else if (!board.areMovesAvailable()) {
+                gameEnded = true;
+                Toast.makeText(getApplicationContext(), "It's a draw!", Toast.LENGTH_SHORT).show();
+            }
+        }
     }
 
     private void displayPlayerToken(ImageView cellImage) {
@@ -34,11 +74,15 @@ public class MainActivity extends AppCompatActivity {
         cellImage.animate().scaleX(1).scaleY(1).rotationBy(ROTATION).setDuration(ANIMATION_DURATION);
     }
 
+    /**
+     * @return The id of the resource to be used as player token.
+     */
     private int getPlayerTokenImage() {
-        return activePlayer == 0 ? R.drawable.red : R.drawable.yellow;
+        return activePlayer.equals(player1) ? R.drawable.red : R.drawable.yellow;
     }
 
     private void changeActivePlayer() {
-        activePlayer = 1 - activePlayer;
+        activePlayer = activePlayer.equals(player1) ? player2 : player1;
     }
+
 }
