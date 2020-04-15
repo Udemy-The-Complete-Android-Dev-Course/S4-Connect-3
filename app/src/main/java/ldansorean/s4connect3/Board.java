@@ -72,4 +72,11 @@ public class Board {
         return board[row][column] == null;
     }
 
+    /**
+     * Reset the board so a new game can start.
+     */
+    public void reset() {
+        board = new Player[3][3];
+        remainingMoves = 9;
+    }
 }
