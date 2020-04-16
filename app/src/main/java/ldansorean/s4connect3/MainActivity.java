@@ -6,8 +6,10 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TableLayout;
 import android.widget.TableRow;
+import android.widget.TextView;
 import android.widget.Toast;
 
 public class MainActivity extends AppCompatActivity {
@@ -26,12 +28,12 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         //setup game
-        this.player1 = new Player(1, "player 1");
-        this.player2 = new Player(2, "player 2");
+        this.player1 = new Player(1, "Red");
+        this.player2 = new Player(2, "Yellow");
         this.activePlayer = player1;
         this.board = new Board();
 
-        findViewById(R.id.restartButton).setVisibility(View.INVISIBLE);
+        setEndOfGameLayoutVisibility(View.INVISIBLE);
     }
 
     public void cellClicked(View view) {
@@ -46,11 +48,9 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void markMove(int row, int column, ImageView imageView) {
-        if (gameEnded) {
-            Toast.makeText(getApplicationContext(), "Game finished.", TOAST_DURATION).show();
-        } else if (!board.isMoveValid(row, column)) {
+        if (!board.isMoveValid(row, column) && !gameEnded) {
             Toast.makeText(getApplicationContext(), "That position is already marked.", TOAST_DURATION).show();
-        } else {
+        } else if (!gameEnded){
             board.markMove(row, column, activePlayer);
             displayPlayerToken(imageView);
             changeActivePlayer();
@@ -58,18 +58,19 @@ public class MainActivity extends AppCompatActivity {
             //check for winner
             Player winner = board.getWinner();
             if (winner != null) {
-                markEndGame();
-                Toast.makeText(getApplicationContext(), winner.getName() + " has won!", TOAST_DURATION).show();
+                endOfGame(winner.getName() + " has won!");
             } else if (!board.areMovesAvailable()) {
-                markEndGame();
-                Toast.makeText(getApplicationContext(), "It's a draw!", TOAST_DURATION).show();
+                endOfGame("It's a draw!");
             }
         }
     }
 
-    private void markEndGame() {
+    private void endOfGame(String resultMessage) {
         gameEnded = true;
-        findViewById(R.id.restartButton).setVisibility(View.VISIBLE);
+
+        setEndOfGameLayoutVisibility(View.VISIBLE);
+        TextView endOfGameMessage = findViewById(R.id.endOfGameMessage);
+        endOfGameMessage.setText(resultMessage);
     }
 
     private void displayPlayerToken(ImageView cellImage) {
@@ -96,7 +97,6 @@ public class MainActivity extends AppCompatActivity {
     public void restartGame(View view) {
         board.reset();
         gameEnded = false;
-        findViewById(R.id.restartButton).setVisibility(View.INVISIBLE);
 
         //hide all images
         TableLayout tableLayout = findViewById(R.id.table);
@@ -106,6 +106,13 @@ public class MainActivity extends AppCompatActivity {
                 ((ImageView) tableRow.getChildAt(imageIndex)).setImageResource(0);
             }
         }
+
+        setEndOfGameLayoutVisibility(View.INVISIBLE);
+    }
+
+    private void setEndOfGameLayoutVisibility(int visibility) {
+        LinearLayout endOfGameLayout = findViewById(R.id.endOfGameLayout);
+        endOfGameLayout.setVisibility(visibility);
     }
 
 }
